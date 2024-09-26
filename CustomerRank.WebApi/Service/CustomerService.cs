@@ -33,8 +33,8 @@ namespace CustomerRankWebApi.Service
             {
                 throw new BusinessException("start and end must be greater than zero,end can't be less than start.", HttpStatusCode.BadRequest);
             }
-            var leaderboard = this.GetLeaderboard();
-            return Task.FromResult(leaderboard.Where(c => c.Rank >= start && c.Rank <= end));
+            
+            return Task.FromResult(this.GetLeaderboard().Where(c => c.Rank >= start && c.Rank <= end));
 
         }
 
