@@ -15,7 +15,7 @@ namespace CustomerRankWebApi.Service
     {
         private static SemaphoreSlim slimlock = new SemaphoreSlim(1, 1);
         private static LinkedCustomer head = new LinkedCustomer { Customer = new Customer { },IsEmpty = true,Next = null };
-        private static IEnumerable<Customer> leaderboardCustomerList = new List<Customer>();
+        //private static IEnumerable<Customer> leaderboardCustomerList = new List<Customer>();
         //private static SortedList<double, Customer> leaderboard = new SortedList<double, Customer>();
         //private static SortedSet<Customer> leaderboard = new SortedSet<Customer>();
        
@@ -33,8 +33,8 @@ namespace CustomerRankWebApi.Service
             {
                 throw new BusinessException("start and end must be greater than zero,end can't be less than start.", HttpStatusCode.BadRequest);
             }
-            //var leaderboard = this.GetLeaderboard();
-            return Task.FromResult(leaderboardCustomerList.Where(c => c.Rank >= start && c.Rank <= end));
+            var leaderboard = this.GetLeaderboard();
+            return Task.FromResult(leaderboard.Where(c => c.Rank >= start && c.Rank <= end));
 
         }
 
@@ -48,8 +48,8 @@ namespace CustomerRankWebApi.Service
             {
                 throw new BusinessException("low and heigh can't be a negative number.", HttpStatusCode.BadRequest);
             }
-            //var leaderboard = this.GetLeaderboard();
-            var customer = leaderboardCustomerList.FirstOrDefault(c => c.CustomerID == customerId);
+            var leaderboard = this.GetLeaderboard();
+            var customer = leaderboard.FirstOrDefault(c => c.CustomerID == customerId);
             if (customer == null)
             {
                 return Task.FromResult(Enumerable.Empty<Customer>());
@@ -58,7 +58,7 @@ namespace CustomerRankWebApi.Service
 
             var customerRank = customer.Rank;
 
-            var list = leaderboardCustomerList.Where(c =>
+            var list = leaderboard.Where(c =>
             {
                 if (low > 0)
                 {
@@ -83,13 +83,13 @@ namespace CustomerRankWebApi.Service
             {
                 var result = this.UpdateCustomer(customerId, score);
 
-                leaderboardCustomerList = this.GetLeaderboard();
+                
 
                 _logger.LogInformation($"----customer:{customerId} updte score finished , score is {result.UpdatedNode.Customer.Score}----");
 
                 if (result.NoticeLeaderboard)
                 {
-                    await this._customerHub.Clients.All.SendLeaderboardToUser(leaderboardCustomerList);
+                    await this._customerHub.Clients.All.SendLeaderboardToUser(this.GetLeaderboard());
                 }
 
                 return result.UpdatedNode.Customer.Score;
